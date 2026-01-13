@@ -1,6 +1,6 @@
 import re
 from datetime import datetime, timedelta, timezone
-from typing import Dict, Any
+from typing import Any
 
 from .client import AlertmanagerClient
 
@@ -8,7 +8,7 @@ from .client import AlertmanagerClient
 ALERT_SUMMARY_MAX_LENGTH = 200
 
 
-def _extract_alert_summary(alert: Dict[str, Any]) -> Dict[str, Any]:
+def _extract_alert_summary(alert: dict[str, Any]) -> dict[str, Any]:
     """Extract essential fields from an alert for summary view.
 
     Args:
@@ -29,10 +29,15 @@ def _extract_alert_summary(alert: Dict[str, Any]) -> Dict[str, Any]:
         "pod": labels.get("pod"),
         "state": status.get("state"),
         "startsAt": alert.get("startsAt"),
-        "summary": annotations.get("summary", annotations.get("description", ""))[:ALERT_SUMMARY_MAX_LENGTH],
+        "summary": annotations.get("summary", annotations.get("description", ""))[
+            :ALERT_SUMMARY_MAX_LENGTH
+        ],
     }
 
-async def get_alerts(client: AlertmanagerClient, active_only: bool = True, filter: str = None):
+
+async def get_alerts(
+    client: AlertmanagerClient, active_only: bool = True, filter: str | None = None
+) -> dict[str, Any]:
     """
     MCP tool to get alerts from Alertmanager (summary view).
 
@@ -53,12 +58,10 @@ async def get_alerts(client: AlertmanagerClient, active_only: bool = True, filte
     """
     alerts = client.get_alerts(active_only=active_only, filter_query=filter)
     summaries = [_extract_alert_summary(alert) for alert in alerts]
-    return {
-        "alerts": summaries,
-        "count": len(summaries)
-    }
+    return {"alerts": summaries, "count": len(summaries)}
 
-async def get_alert_details(client: AlertmanagerClient, fingerprint: str):
+
+async def get_alert_details(client: AlertmanagerClient, fingerprint: str) -> dict[str, Any]:
     """
     MCP tool to get complete details for a specific alert.
 
@@ -88,11 +91,13 @@ async def get_alert_details(client: AlertmanagerClient, fingerprint: str):
             available_preview += f" (and {available_count - 3} more)"
         raise ValueError(
             f"Alert with fingerprint '{fingerprint}' not found. "
-            f"Available fingerprints: {available_preview}" if available else
-            f"Alert with fingerprint '{fingerprint}' not found. No alerts available."
+            f"Available fingerprints: {available_preview}"
+            if available
+            else f"Alert with fingerprint '{fingerprint}' not found. No alerts available."
         )
 
     return {"alert": alert}
+
 
 def _parse_duration(duration_str: str) -> timedelta:
     """
@@ -118,7 +123,9 @@ def _parse_duration(duration_str: str) -> timedelta:
     raise ValueError(f"Unknown duration unit: {unit}")
 
 
-async def silence_alert(client: AlertmanagerClient, fingerprint: str, duration: str, comment: str):
+async def silence_alert(
+    client: AlertmanagerClient, fingerprint: str, duration: str, comment: str
+) -> dict[str, Any]:
     """
     MCP tool to silence an alert.
 
@@ -147,10 +154,9 @@ async def silence_alert(client: AlertmanagerClient, fingerprint: str, duration: 
     """
     # Fetch the alert to get its labels
     alerts = client.get_alerts(active_only=False)
-    alert_to_silence = next((
-        alert for alert in alerts
-        if alert.get("fingerprint") == fingerprint
-    ), None)
+    alert_to_silence = next(
+        (alert for alert in alerts if alert.get("fingerprint") == fingerprint), None
+    )
 
     if not alert_to_silence:
         available = [a.get("fingerprint") for a in alerts if a.get("fingerprint")]
@@ -160,8 +166,9 @@ async def silence_alert(client: AlertmanagerClient, fingerprint: str, duration: 
             available_preview += f" (and {available_count - 3} more)"
         raise ValueError(
             f"Alert with fingerprint '{fingerprint}' not found. "
-            f"Available fingerprints: {available_preview}" if available else
-            f"Alert with fingerprint '{fingerprint}' not found. No alerts available."
+            f"Available fingerprints: {available_preview}"
+            if available
+            else f"Alert with fingerprint '{fingerprint}' not found. No alerts available."
         )
 
     matchers = [
@@ -182,7 +189,7 @@ async def silence_alert(client: AlertmanagerClient, fingerprint: str, duration: 
     return {"silence_id": result.get("silenceID")}
 
 
-async def list_silences(client: AlertmanagerClient):
+async def list_silences(client: AlertmanagerClient) -> dict[str, Any]:
     """
     MCP tool to list silences.
 

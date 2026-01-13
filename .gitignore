@@ -30,3 +30,4 @@ htmlcov/
 .claude
 CLAUDE.MD
 .mcp.json
+.mcp-personal/

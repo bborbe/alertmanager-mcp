@@ -1,5 +1,7 @@
 import os
+
 from dotenv import load_dotenv
+
 
 class Config:
     """
@@ -11,12 +13,14 @@ class Config:
         ALERTMANAGER_USERNAME (optional): Username for HTTP basic auth
         ALERTMANAGER_PASSWORD (optional): Password for HTTP basic auth
         ALERTMANAGER_TIMEOUT (optional): Request timeout in seconds (default: 30)
-        ALERTMANAGER_CREATED_BY (optional): Identity for silence creation (default: alertmanager-mcp)
+        ALERTMANAGER_CREATED_BY (optional): Identity for silence creation
+            (default: alertmanager-mcp)
 
     Note: Authentication is optional. If username and password are not provided,
     requests will be made without authentication.
     """
-    def __init__(self):
+
+    def __init__(self) -> None:
         load_dotenv()
         self.alertmanager_url = os.getenv("ALERTMANAGER_URL")
         self.alertmanager_username = os.getenv("ALERTMANAGER_USERNAME")
@@ -26,6 +30,7 @@ class Config:
 
         if not self.alertmanager_url:
             raise ValueError("Missing required environment variable: ALERTMANAGER_URL")
+
 
 def get_config() -> Config:
     """

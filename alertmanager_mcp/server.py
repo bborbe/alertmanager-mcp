@@ -1,10 +1,10 @@
-from typing import Dict, Any, Optional
+from typing import Any
+
 from fastmcp import FastMCP
 
-from .config import get_config
-from .client import AlertmanagerClient
 from . import mcp_tools
-from datetime import datetime, timezone
+from .client import AlertmanagerClient
+from .config import get_config
 
 # Initialize MCP server
 mcp = FastMCP("Alertmanager MCP")
@@ -13,11 +13,9 @@ mcp = FastMCP("Alertmanager MCP")
 config = get_config()
 client = AlertmanagerClient(config)
 
+
 @mcp.tool(description="Get alerts from Alertmanager (summary view)")
-async def get_alerts(
-    active_only: bool = True,
-    filter: Optional[str] = None
-) -> Dict[str, Any]:
+async def get_alerts(active_only: bool = True, filter: str | None = None) -> dict[str, Any]:
     """Fetch alerts from Alertmanager with essential fields only.
 
     Args:
@@ -29,8 +27,9 @@ async def get_alerts(
     """
     return await mcp_tools.get_alerts(client, active_only=active_only, filter=filter)
 
+
 @mcp.tool(description="Get detailed information for a specific alert")
-async def get_alert_details(fingerprint: str) -> Dict[str, Any]:
+async def get_alert_details(fingerprint: str) -> dict[str, Any]:
     """Fetch complete details for a specific alert by fingerprint.
 
     Args:
@@ -41,12 +40,9 @@ async def get_alert_details(fingerprint: str) -> Dict[str, Any]:
     """
     return await mcp_tools.get_alert_details(client, fingerprint=fingerprint)
 
+
 @mcp.tool(description="Silence an alert in Alertmanager")
-async def silence_alert(
-    fingerprint: str,
-    duration: str,
-    comment: str
-) -> Dict[str, Any]:
+async def silence_alert(fingerprint: str, duration: str, comment: str) -> dict[str, Any]:
     """Create a silence for an alert.
 
     Args:
@@ -57,16 +53,20 @@ async def silence_alert(
     Returns:
         Dictionary containing silence_id
     """
-    return await mcp_tools.silence_alert(client, fingerprint=fingerprint, duration=duration, comment=comment)
+    return await mcp_tools.silence_alert(
+        client, fingerprint=fingerprint, duration=duration, comment=comment
+    )
+
 
 @mcp.tool(description="List silences from Alertmanager")
-async def list_silences() -> Dict[str, Any]:
+async def list_silences() -> dict[str, Any]:
     """List existing silences from Alertmanager.
 
     Returns:
         Dictionary containing list of silences
     """
     return await mcp_tools.list_silences(client)
+
 
 if __name__ == "__main__":
     mcp.run()

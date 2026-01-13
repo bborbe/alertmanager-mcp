@@ -1,43 +1,48 @@
-from typing import Dict, Any, Optional
+from typing import Any
 from urllib.parse import urljoin
+
 import requests
 from requests.auth import HTTPBasicAuth
 
 from .config import Config
 
+
 class AlertmanagerClient:
     """
     HTTP client for interacting with the Alertmanager API.
     """
-    def __init__(self, config: Config):
+
+    def __init__(self, config: Config) -> None:
         self.config = config
         self.session = requests.Session()
         if config.alertmanager_username and config.alertmanager_password:
             self.session.auth = HTTPBasicAuth(
-                config.alertmanager_username,
-                config.alertmanager_password
+                config.alertmanager_username, config.alertmanager_password
             )
 
-    def _request(self, method: str, path: str, **kwargs) -> Dict[str, Any]:
+    def _request(self, method: str, path: str, **kwargs: Any) -> dict[str, Any]:
         """
         Internal method to make HTTP requests to the Alertmanager API.
         """
         # Ensure base URL ends with / for urljoin to work correctly
         base_url = self.config.alertmanager_url
-        if not base_url.endswith('/'):
-            base_url += '/'
-        url = urljoin(base_url, path.lstrip('/'))
+        if base_url is None:
+            raise ValueError("Alertmanager URL is not configured")
+        if not base_url.endswith("/"):
+            base_url += "/"
+        url = urljoin(base_url, path.lstrip("/"))
         try:
-            response = self.session.request(method, url, timeout=self.config.request_timeout, **kwargs)
+            response = self.session.request(
+                method, url, timeout=self.config.request_timeout, **kwargs
+            )
             response.raise_for_status()
             return response.json()
         except requests.exceptions.HTTPError as e:
             raise requests.exceptions.HTTPError(
-                f"HTTP error for {method} {path}: {e}",
-                response=e.response
+                f"HTTP error for {method} {path}: {e}", response=e.response
             ) from e
 
-    def get_alerts(self, active_only: bool = True, filter_query: Optional[str] = None) -> list:
+    def get_alerts(self, active_only: bool = True, filter_query: str | None = None) -> Any:
         """
         Fetch alerts from Alertmanager.
         """
@@ -46,13 +51,20 @@ class AlertmanagerClient:
             params["filter"] = filter_query
         return self._request("GET", "/api/v2/alerts", params=params)
 
-    def get_silences(self) -> list:
+    def get_silences(self) -> Any:
         """
         Fetch silences from Alertmanager.
         """
         return self._request("GET", "/api/v2/silences")
 
-    def create_silence(self, matchers: list, starts_at: str, ends_at: str, comment: str, created_by: str) -> dict:
+    def create_silence(
+        self,
+        matchers: list[dict[str, str]],
+        starts_at: str,
+        ends_at: str,
+        comment: str,
+        created_by: str,
+    ) -> dict[str, Any]:
         """
         Create a silence in Alertmanager.
         """
@@ -64,4 +76,3 @@ class AlertmanagerClient:
             "createdBy": created_by,
         }
         return self._request("POST", "/api/v2/silences", json=payload)
-

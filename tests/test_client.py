@@ -1,9 +1,9 @@
 from unittest.mock import Mock
-import pytest
-from requests import HTTPError
 
+import pytest
 from alertmanager_mcp.client import AlertmanagerClient
 from alertmanager_mcp.config import Config
+from requests import HTTPError
 
 
 def test_get_alerts_success(mocker):
@@ -16,10 +16,7 @@ def test_get_alerts_success(mocker):
     mocker.patch("requests.Session.request", return_value=mock_response)
 
     def mock_getenv(key, default=None):
-        env_vars = {
-            "ALERTMANAGER_URL": "http://fake-alertmanager",
-            "ALERTMANAGER_TIMEOUT": "30"
-        }
+        env_vars = {"ALERTMANAGER_URL": "http://fake-alertmanager", "ALERTMANAGER_TIMEOUT": "30"}
         return env_vars.get(key, default)
 
     mocker.patch("os.getenv", side_effect=mock_getenv)
@@ -29,6 +26,7 @@ def test_get_alerts_success(mocker):
 
     assert len(alerts) == 1
     assert alerts[0]["labels"]["alertname"] == "TestAlert"
+
 
 def test_create_silence_success(mocker):
     """
@@ -40,10 +38,7 @@ def test_create_silence_success(mocker):
     mocker.patch("requests.Session.request", return_value=mock_response)
 
     def mock_getenv(key, default=None):
-        env_vars = {
-            "ALERTMANAGER_URL": "http://fake-alertmanager",
-            "ALERTMANAGER_TIMEOUT": "30"
-        }
+        env_vars = {"ALERTMANAGER_URL": "http://fake-alertmanager", "ALERTMANAGER_TIMEOUT": "30"}
         return env_vars.get(key, default)
 
     mocker.patch("os.getenv", side_effect=mock_getenv)
@@ -54,6 +49,7 @@ def test_create_silence_success(mocker):
 
     assert result["silenceID"] == "test-silence-id"
 
+
 def test_http_error(mocker):
     """
     Test that HTTP errors are raised.
@@ -63,10 +59,7 @@ def test_http_error(mocker):
     mocker.patch("requests.Session.request", return_value=mock_response)
 
     def mock_getenv(key, default=None):
-        env_vars = {
-            "ALERTMANAGER_URL": "http://fake-alertmanager",
-            "ALERTMANAGER_TIMEOUT": "30"
-        }
+        env_vars = {"ALERTMANAGER_URL": "http://fake-alertmanager", "ALERTMANAGER_TIMEOUT": "30"}
         return env_vars.get(key, default)
 
     mocker.patch("os.getenv", side_effect=mock_getenv)
@@ -75,4 +68,3 @@ def test_http_error(mocker):
     client = AlertmanagerClient(config)
     with pytest.raises(HTTPError):
         client.get_alerts()
-
