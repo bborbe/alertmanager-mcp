@@ -27,7 +27,7 @@ htmlcov/
 .idea/
 .vscode/
 
-.claude
-CLAUDE.MD
-.mcp.json
-.mcp-personal/
+/.claude/
+/CLAUDE.MD
+/.mcp.json
+/.mcp-*
