@@ -1,6 +1,9 @@
+import logging
 import os
 
 from dotenv import load_dotenv
+
+logger = logging.getLogger(__name__)
 
 
 class Config:
@@ -22,14 +25,43 @@ class Config:
 
     def __init__(self) -> None:
         load_dotenv()
+        logger.debug("Loading Alertmanager MCP configuration from environment")
+
         self.alertmanager_url = os.getenv("ALERTMANAGER_URL")
         self.alertmanager_username = os.getenv("ALERTMANAGER_USERNAME")
         self.alertmanager_password = os.getenv("ALERTMANAGER_PASSWORD")
-        self.request_timeout = int(os.getenv("ALERTMANAGER_TIMEOUT", "30"))
+
+        # Safe parsing with validation
+        timeout_str = os.getenv("ALERTMANAGER_TIMEOUT", "30")
+        try:
+            self.request_timeout = int(timeout_str)
+            if self.request_timeout <= 0:
+                raise ValueError("Timeout must be positive")
+        except ValueError as e:
+            logger.error(
+                "Invalid ALERTMANAGER_TIMEOUT value: %s",
+                timeout_str,
+                exc_info=True,
+            )
+            raise ValueError(
+                f"Invalid ALERTMANAGER_TIMEOUT value: must be positive integer, got {timeout_str!r}"
+            ) from e
+
         self.created_by = os.getenv("ALERTMANAGER_CREATED_BY", "alertmanager-mcp")
 
         if not self.alertmanager_url:
+            logger.error("Missing required environment variable: ALERTMANAGER_URL")
             raise ValueError("Missing required environment variable: ALERTMANAGER_URL")
+
+        # Log configuration (mask sensitive data)
+        auth_status = "enabled" if self.alertmanager_username else "disabled"
+        logger.info(
+            "Alertmanager config loaded: url=%s, timeout=%ds, auth=%s, created_by=%s",
+            self.alertmanager_url,
+            self.request_timeout,
+            auth_status,
+            self.created_by,
+        )
 
 
 def get_config() -> Config:
@@ -48,7 +80,7 @@ def get_config() -> Config:
 
     Example:
         >>> config = get_config()
-        >>> print(config.alertmanager_url)
-        https://alertmanager.example.com
+        >>> config.alertmanager_url
+        'https://alertmanager.example.com'
     """
     return Config()

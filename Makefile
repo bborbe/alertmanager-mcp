@@ -11,7 +11,7 @@ lint:
 	uv run ruff check .
 
 typecheck:
-	uv run mypy alertmanager_mcp
+	uv run mypy src
 
 check: lint typecheck
 

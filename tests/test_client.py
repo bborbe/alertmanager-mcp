@@ -1,9 +1,10 @@
 from unittest.mock import Mock
 
 import pytest
+from requests import HTTPError
+
 from alertmanager_mcp.client import AlertmanagerClient
 from alertmanager_mcp.config import Config
-from requests import HTTPError
 
 
 def test_get_alerts_success(mocker):

@@ -3,15 +3,10 @@ from typing import Any
 from fastmcp import FastMCP
 
 from . import mcp_tools
-from .client import AlertmanagerClient
-from .config import get_config
+from .factory import get_client
 
 # Initialize MCP server
 mcp = FastMCP("Alertmanager MCP")
-
-# Initialize config and client
-config = get_config()
-client = AlertmanagerClient(config)
 
 
 @mcp.tool(description="Get alerts from Alertmanager (summary view)")
@@ -25,7 +20,7 @@ async def get_alerts(active_only: bool = True, filter: str | None = None) -> dic
     Returns:
         Dictionary containing list of alert summaries
     """
-    return await mcp_tools.get_alerts(client, active_only=active_only, filter=filter)
+    return await mcp_tools.get_alerts(get_client(), active_only=active_only, filter=filter)
 
 
 @mcp.tool(description="Get detailed information for a specific alert")
@@ -38,7 +33,7 @@ async def get_alert_details(fingerprint: str) -> dict[str, Any]:
     Returns:
         Dictionary containing complete alert details
     """
-    return await mcp_tools.get_alert_details(client, fingerprint=fingerprint)
+    return await mcp_tools.get_alert_details(get_client(), fingerprint=fingerprint)
 
 
 @mcp.tool(description="Silence an alert in Alertmanager")
@@ -54,7 +49,7 @@ async def silence_alert(fingerprint: str, duration: str, comment: str) -> dict[s
         Dictionary containing silence_id
     """
     return await mcp_tools.silence_alert(
-        client, fingerprint=fingerprint, duration=duration, comment=comment
+        get_client(), fingerprint=fingerprint, duration=duration, comment=comment
     )
 
 
@@ -65,7 +60,7 @@ async def list_silences() -> dict[str, Any]:
     Returns:
         Dictionary containing list of silences
     """
-    return await mcp_tools.list_silences(client)
+    return await mcp_tools.list_silences(get_client())
 
 
 if __name__ == "__main__":

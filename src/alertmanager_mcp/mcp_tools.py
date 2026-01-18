@@ -1,8 +1,11 @@
+import logging
 import re
-from datetime import datetime, timedelta, timezone
-from typing import Any
+from datetime import UTC, datetime, timedelta
+from typing import Any, cast
 
 from .client import AlertmanagerClient
+
+logger = logging.getLogger(__name__)
 
 # Maximum length for alert summary text
 ALERT_SUMMARY_MAX_LENGTH = 200
@@ -51,13 +54,15 @@ async def get_alerts(
 
     Example:
         >>> result = await get_alerts(client, active_only=True, filter='severity="warning"')
-        >>> print(result['count'])
+        >>> result['count']
         5
-        >>> print(result['alerts'][0]['alertname'])
-        HighMemoryUsage
+        >>> result['alerts'][0]['alertname']
+        'HighMemoryUsage'
     """
+    logger.info("Getting alerts: active_only=%s, filter=%s", active_only, filter)
     alerts = client.get_alerts(active_only=active_only, filter_query=filter)
     summaries = [_extract_alert_summary(alert) for alert in alerts]
+    logger.info("Retrieved %d alerts", len(summaries))
     return {"alerts": summaries, "count": len(summaries)}
 
 
@@ -77,14 +82,16 @@ async def get_alert_details(client: AlertmanagerClient, fingerprint: str) -> dic
 
     Example:
         >>> result = await get_alert_details(client, fingerprint="abc123def456")
-        >>> print(result['alert']['annotations']['runbook_url'])
-        https://example.com/runbook/high-memory
+        >>> result['alert']['annotations']['runbook_url']
+        'https://example.com/runbook/high-memory'
     """
+    logger.info("Getting alert details for fingerprint: %s", fingerprint)
     alerts = client.get_alerts(active_only=False)
     alert = next((a for a in alerts if a.get("fingerprint") == fingerprint), None)
 
     if not alert:
-        available = [a.get("fingerprint") for a in alerts if a.get("fingerprint")]
+        logger.warning("Alert not found: %s", fingerprint)
+        available = cast(list[str], [a.get("fingerprint") for a in alerts if a.get("fingerprint")])
         available_count = len(available)
         available_preview = ", ".join(available[:3])
         if available_count > 3:
@@ -96,6 +103,7 @@ async def get_alert_details(client: AlertmanagerClient, fingerprint: str) -> dic
             else f"Alert with fingerprint '{fingerprint}' not found. No alerts available."
         )
 
+    logger.debug("Found alert: %s", alert.get("labels", {}).get("alertname"))
     return {"alert": alert}
 
 
@@ -149,9 +157,16 @@ async def silence_alert(
         ...     duration="2h",
         ...     comment="Planned maintenance"
         ... )
-        >>> print(result['silence_id'])
-        silence-xyz789
+        >>> result['silence_id']
+        'silence-xyz789'
     """
+    logger.info(
+        "Silencing alert: fingerprint=%s, duration=%s, comment=%s",
+        fingerprint,
+        duration,
+        comment,
+    )
+
     # Fetch the alert to get its labels
     alerts = client.get_alerts(active_only=False)
     alert_to_silence = next(
@@ -159,7 +174,8 @@ async def silence_alert(
     )
 
     if not alert_to_silence:
-        available = [a.get("fingerprint") for a in alerts if a.get("fingerprint")]
+        logger.warning("Alert not found for silencing: %s", fingerprint)
+        available = cast(list[str], [a.get("fingerprint") for a in alerts if a.get("fingerprint")])
         available_count = len(available)
         available_preview = ", ".join(available[:3])
         if available_count > 3:
@@ -176,9 +192,10 @@ async def silence_alert(
         for name, value in alert_to_silence["labels"].items()
     ]
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     ends_at = now + _parse_duration(duration)
 
+    logger.debug("Creating silence: matchers=%d, ends_at=%s", len(matchers), ends_at)
     result = client.create_silence(
         matchers=matchers,
         starts_at=now.isoformat(),
@@ -186,7 +203,9 @@ async def silence_alert(
         comment=comment,
         created_by=client.config.created_by,
     )
-    return {"silence_id": result.get("silenceID")}
+    silence_id = result.get("silenceID")
+    logger.info("Silence created: %s", silence_id)
+    return {"silence_id": silence_id}
 
 
 async def list_silences(client: AlertmanagerClient) -> dict[str, Any]:
@@ -201,10 +220,12 @@ async def list_silences(client: AlertmanagerClient) -> dict[str, Any]:
 
     Example:
         >>> result = await list_silences(client)
-        >>> print(len(result['silences']))
+        >>> len(result['silences'])
         3
-        >>> print(result['silences'][0]['comment'])
-        Maintenance window
+        >>> result['silences'][0]['comment']
+        'Maintenance window'
     """
+    logger.info("Listing silences")
     silences = client.get_silences()
+    logger.info("Retrieved %d silences", len(silences))
     return {"silences": silences}

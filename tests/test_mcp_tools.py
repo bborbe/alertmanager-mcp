@@ -2,6 +2,7 @@ from datetime import timedelta
 from unittest.mock import Mock
 
 import pytest
+
 from alertmanager_mcp.mcp_tools import (
     _parse_duration,
     get_alert_details,
