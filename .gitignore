@@ -31,3 +31,5 @@ htmlcov/
 /CLAUDE.MD
 /.mcp.json
 /.mcp-*
+/.update-logs/
+/CLAUDE.md

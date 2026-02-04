@@ -8,6 +8,12 @@ Please choose versions by [Semantic Versioning](http://semver.org/).
 * MINOR version when you add functionality in a backwards-compatible manner, and
 * PATCH version when you make backwards-compatible bug fixes.
 
+## v0.1.1
+
+- Upgrade Python requirement from 3.12 to 3.14
+- Update multiple dependencies (anyio, beartype, cryptography, pydantic-core, ruff, etc.)
+- Add new optional dependencies (keyring, lupa, redis support)
+
 ## v0.1.0
 
 - Initial release with MCP server for Alertmanager integration

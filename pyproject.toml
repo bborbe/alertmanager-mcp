@@ -5,7 +5,7 @@ description = "MCP Server for Prometheus Alertmanager"
 authors = [{name = "Benjamin Borbe", email = "bborbe@rocketnews.de"}]
 license = {text = "BSD-2-Clause"}
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.14"
 dependencies = [
     "requests>=2.31.0",
     "python-dotenv>=1.0.0",
@@ -34,7 +34,7 @@ packages = ["src/alertmanager_mcp"]
 
 [tool.ruff]
 line-length = 100
-target-version = "py312"
+target-version = "py314"
 src = ["src", "tests"]
 
 [tool.ruff.lint]
@@ -51,7 +51,7 @@ select = [
 ]
 
 [tool.mypy]
-python_version = "3.12"
+python_version = "3.14"
 strict = true
 warn_return_any = true
 warn_unused_ignores = true
