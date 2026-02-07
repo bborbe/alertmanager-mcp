@@ -24,7 +24,7 @@ typecheck:
 check: lint typecheck
 
 # Run tests with pytest
-test:
+test: sync
 	uv run pytest
 
 # Run all precommit checks
